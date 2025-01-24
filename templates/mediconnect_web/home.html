@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}MediConnect - Your Healthcare Connection{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80') center/cover;
+        opacity: 0.1;
+    }
+
+    .feature-card {
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .doctor-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .hospital-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .hospital-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .stats-counter {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+
+    .section-heading {
+        position: relative;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+    }
+
+    .section-heading::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: #0d6efd;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: white;
+        font-size: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white position-relative">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-4 mb-lg-0">
+                <h1 class="display-5 fw-bold mb-3">Your Health, Our Priority</h1>
+                <p class="lead mb-4">Connect with top healthcare professionals and leading hospitals through our innovative platform.</p>
+                <div class="d-flex gap-3">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4">Get Started</a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">Sign In</a>
+                    {% else %}
+                        <a href="{% url 'hospital_list' %}" class="btn btn-light btn-lg px-4">Find Hospitals</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="position-relative" style="max-width: 600px; margin: 0 auto;">
+                    <img src="https://img.freepik.com/free-vector/hospital-building-concept-illustration_114360-8440.jpg" 
+                         alt="Healthcare" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 400px; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Search Section -->
+<section class="py-4 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <form action="{% url 'search_doctors' %}" method="GET" class="row g-3">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class="fas fa-user-md text-primary"></i>
+                                    </span>
+                                    <input type="text" name="specialty" class="form-control border-start-0" placeholder="Specialty (e.g., Cardiology)">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0">
+                                        <i class="fas fa-map-marker-alt text-primary"></i>
+                                    </span>
+                                    <input type="text" name="location" class="form-control border-start-0" placeholder="Location">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-2"></i>Find
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="text-center">
+                    <div class="stats-counter">50+</div>
+                    <p class="text-muted mb-0">Hospitals</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="text-center">
+                    <div class="stats-counter">200+</div>
+                    <p class="text-muted mb-0">Doctors</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="text-center">
+                    <div class="stats-counter">10K+</div>
+                    <p class="text-muted mb-0">Patients</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="text-center">
+                    <div class="stats-counter">15K+</div>
+                    <p class="text-muted mb-0">Appointments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Hospitals -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center section-heading">Leading Healthcare Facilities</h2>
+        <div class="row g-4">
+            {% for hospital in hospitals %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="hospital-card card h-100 shadow-sm">
+                        <div class="position-relative">
+                            {% if hospital.image %}
+                                <img src="{{ hospital.image.url }}" class="card-img-top" alt="{{ hospital.name }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1587351021759-3e566b35a3e7?auto=format&fit=crop&q=80" class="card-img-top" alt="{{ hospital.name }}" style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">{{ hospital.name }}</h5>
+                            <p class="card-text text-muted mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ hospital.location }}
+                            </p>
+                            <a href="{% url 'hospital_detail' hospital.pk %}" class="btn btn-gradient w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="{% url 'hospital_list' %}" class="btn btn-outline-primary btn-lg px-4">Explore All Hospitals</a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Doctors -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center section-heading">Meet Our Specialists</h2>
+        <div class="row g-4">
+            {% for doctor in doctors %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="doctor-card card h-100 shadow-sm">
+                        {% if doctor.user.user_profile.profile_picture %}
+                            <img src="{{ doctor.user.user_profile.profile_picture.url }}" 
+                                 class="card-img-top" alt="Dr. {{ doctor.user.get_full_name }}"
+                                 style="height: 300px; object-fit: cover;">
+                        {% else %}
+                            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80" 
+                                 class="card-img-top" alt="Dr. {{ doctor.user.get_full_name }}"
+                                 style="height: 300px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-2">Dr. {{ doctor.user.get_full_name }}</h5>
+                            <p class="text-primary mb-3">{{ doctor.specialization }}</p>
+                            <p class="card-text small text-muted">
+                                <i class="fas fa-hospital me-2"></i>
+                                {% for hospital in doctor.hospitals.all %}
+                                    {{ hospital.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center section-heading">Why Choose MediConnect?</h2>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">Top Hospitals</h4>
+                        <p class="text-muted mb-0">Partner with leading healthcare facilities to ensure quality care.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">Expert Doctors</h4>
+                        <p class="text-muted mb-0">Access to experienced and qualified healthcare professionals.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">Easy Booking</h4>
+                        <p class="text-muted mb-0">Simple and quick appointment scheduling process.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">24/7 Support</h4>
+                        <p class="text-muted mb-0">Round-the-clock assistance for all your healthcare needs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Get Started?</h2>
+        <p class="lead mb-4">Join thousands of satisfied patients who trust MediConnect for their healthcare needs.</p>
+        {% if not user.is_authenticated %}
+            <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4">Create Your Account</a>
+        {% else %}
+            <a href="{% url 'hospital_list' %}" class="btn btn-light btn-lg px-4">Find a Doctor</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Contact Us - MediConnect{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Contact Form -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Get in Touch</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">Contact Information</h4>
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                        123 Healthcare Street<br>
+                        Medical District<br>
+                        City, State 12345
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-phone text-primary me-2"></i>
+                        +1 234 567 890
+                    </li>
+                    <li class="mb-3">
+                        <i class="fas fa-envelope text-primary me-2"></i>
+                        info@mediconnect.com
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Business Hours</h4>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>Monday - Friday:</strong><br>
+                        9:00 AM - 6:00 PM
+                    </li>
+                    <li class="mb-2">
+                        <strong>Saturday:</strong><br>
+                        9:00 AM - 2:00 PM
+                    </li>
+                    <li>
+                        <strong>Sunday:</strong><br>
+                        Closed
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h3 class="card-title mb-4">Frequently Asked Questions</h3>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#faq1">
+                        How do I book an appointment?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        To book an appointment, you need to create an account and purchase either a subscription 
+                        or tokens. Then, you can browse our hospitals, select a doctor, and choose an available 
+                        time slot that works for you.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#faq2">
+                        What's the difference between subscriptions and tokens?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Subscriptions provide unlimited access to our network of hospitals for a fixed period. 
+                        Tokens are one-time use passes that allow you to book individual appointments. Choose 
+                        the option that best fits your healthcare needs.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#faq3">
+                        How can I cancel or reschedule an appointment?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        You can cancel or reschedule appointments through your account dashboard. Please note 
+                        that cancellations should be made at least 24 hours before the scheduled appointment 
+                        time to avoid any penalties.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

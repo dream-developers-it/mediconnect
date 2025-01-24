@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}bKash Payment - MediConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <!-- Header Section -->
+                <div class="card-header bg-primary text-white text-center p-4 border-0">
+                    <img src="{% static 'images/bkash-logo.png' %}" alt="bKash Logo" class="mb-3" style="height: 50px;">
+                    <h3 class="mb-0">Token Purchase</h3>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Token Summary -->
+                    <div class="token-summary mb-4">
+                        <div class="row g-3">
+                            <!-- Current Balance -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <small class="text-muted text-uppercase fw-bold">Current Balance</small>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <div class="token-icon me-3">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                                                <i class="fas fa-coins text-primary"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="mb-0">{{ current_tokens.token_count|default:"0" }}</h4>
+                                            <small class="text-muted">Tokens</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- After Purchase -->
+                            <div class="col-md-6">
+                                <div class="p-3 bg-success bg-opacity-10 rounded-3 h-100">
+                                    <small class="text-muted text-uppercase fw-bold">After Purchase</small>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <div class="token-icon me-3">
+                                            <div class="bg-success bg-opacity-10 rounded-circle p-2">
+                                                <i class="fas fa-coins text-success"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="mb-0">{{ current_tokens.token_count|default:0|add:token_count }}</h4>
+                                            <small class="text-muted">Tokens</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purchase Details -->
+                    <div class="purchase-details bg-light rounded-3 p-4 mb-4">
+                        <h5 class="text-uppercase mb-4 fw-bold fs-6">Purchase Details</h5>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="purchase-item">
+                                    <small class="text-muted d-block">You're Buying</small>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-plus-circle text-success me-2"></i>
+                                        <h5 class="mb-0">{{ token_count }} Tokens</h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="purchase-item text-end">
+                                    <small class="text-muted d-block">Amount</small>
+                                    <h5 class="mb-0">{{ amount }} BDT</h5>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <hr class="my-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Payment ID</small>
+                                    <code class="text-primary">{{ payment_id }}</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Instructions -->
+                    <div class="payment-instructions mb-4">
+                        <h5 class="text-uppercase mb-3 fw-bold fs-6">Payment Instructions</h5>
+                        <div class="bg-light rounded-3 p-4">
+                            <ol class="mb-0 ps-3">
+                                <li class="mb-2">Open your bKash mobile app</li>
+                                <li class="mb-2">Go to "Payment" option</li>
+                                <li class="mb-2">Enter merchant number: <span class="fw-bold">{{ merchant_number }}</span></li>
+                                <li class="mb-2">Enter amount: <span class="fw-bold">{{ amount }} BDT</span></li>
+                                <li class="mb-2">Enter reference: <span class="fw-bold">{{ payment_id }}</span></li>
+                                <li>Confirm your payment with PIN</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div id="payment-status" class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span>Waiting for payment confirmation...</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button id="check-payment" class="btn btn-primary btn-lg">
+                            <span class="btn-text">
+                                <i class="fas fa-sync-alt me-2"></i>Check Payment Status
+                            </span>
+                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                <span class="visually-hidden">Checking...</span>
+                            </span>
+                        </button>
+                        <a href="{% url 'token_purchase' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel Payment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.token-icon i {
+    font-size: 1.5rem;
+}
+.token-summary .rounded-3 {
+    transition: transform 0.2s;
+}
+.token-summary .rounded-3:hover {
+    transform: translateY(-2px);
+}
+.purchase-details, .payment-instructions {
+    border: 1px solid rgba(0,0,0,0.1);
+}
+#check-payment:disabled {
+    cursor: not-allowed;
+}
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkPaymentBtn = document.getElementById('check-payment');
+    const paymentStatusDiv = document.getElementById('payment-status');
+    const btnSpinner = checkPaymentBtn.querySelector('.spinner-border');
+    const btnText = checkPaymentBtn.querySelector('.btn-text');
+    let checkingPayment = false;
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function updatePaymentStatus(type, message) {
+        const icons = {
+            'info': 'fa-info-circle',
+            'success': 'fa-check-circle',
+            'warning': 'fa-exclamation-circle',
+            'danger': 'fa-times-circle'
+        };
+        
+        paymentStatusDiv.className = `alert alert-${type} mb-4`;
+        paymentStatusDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${icons[type]} me-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+    }
+
+    checkPaymentBtn.addEventListener('click', function() {
+        if (checkingPayment) return;
+        checkingPayment = true;
+        
+        checkPaymentBtn.disabled = true;
+        btnText.classList.add('d-none');
+        btnSpinner.classList.remove('d-none');
+        
+        fetch('{% url "check_payment_status" payment_id %}', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'completed') {
+                updatePaymentStatus('success', 'Payment completed successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 2000);
+            } else if (data.status === 'pending') {
+                updatePaymentStatus('info', 'Payment is still pending. Please wait...');
+            } else {
+                updatePaymentStatus('warning', data.message || 'Payment status unknown');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            updatePaymentStatus('danger', 'Error checking payment status. Please try again.');
+        })
+        .finally(() => {
+            checkingPayment = false;
+            checkPaymentBtn.disabled = false;
+            btnText.classList.remove('d-none');
+            btnSpinner.classList.add('d-none');
+        });
+    });
+});
+</script>
+{% endblock %}

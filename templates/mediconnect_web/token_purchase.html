@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Purchase Tokens - MediConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="text-center mb-5">
+                <h2 class="fw-bold mb-3">Purchase Tokens</h2>
+                <p class="text-muted">Choose a token package that suits your needs</p>
+            </div>
+
+            <!-- Current Balance Card -->
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Current Balance</small>
+                            <div class="d-flex align-items-center mt-2">
+                                <div class="token-icon me-3">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                                        <i class="fas fa-coins text-primary"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0">{{ current_tokens.token_count|default:"0" }}</h3>
+                                    <small class="text-muted">Available Tokens</small>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#token-packages" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Buy More
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Packages -->
+            <div id="token-packages" class="row g-4">
+                <!-- Basic Package -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm package-card">
+                        <div class="card-body p-4 text-center">
+                            <div class="package-icon mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block">
+                                    <i class="fas fa-cube text-primary fa-2x"></i>
+                                </div>
+                            </div>
+                            <h4 class="mb-3">Basic</h4>
+                            <div class="package-price mb-4">
+                                <h3 class="mb-0">500 BDT</h3>
+                                <small class="text-muted">10 Tokens</small>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="500">
+                                <input type="hidden" name="token_count" value="10">
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-shopping-cart me-2"></i>Purchase
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Standard Package -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm package-card popular">
+                        <div class="card-body p-4 text-center">
+                            <div class="popular-badge">
+                                <span class="badge bg-primary">Most Popular</span>
+                            </div>
+                            <div class="package-icon mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block">
+                                    <i class="fas fa-cubes text-primary fa-2x"></i>
+                                </div>
+                            </div>
+                            <h4 class="mb-3">Standard</h4>
+                            <div class="package-price mb-4">
+                                <h3 class="mb-0">1000 BDT</h3>
+                                <small class="text-muted">25 Tokens</small>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="1000">
+                                <input type="hidden" name="token_count" value="25">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-shopping-cart me-2"></i>Purchase
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premium Package -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm package-card">
+                        <div class="card-body p-4 text-center">
+                            <div class="package-icon mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block">
+                                    <i class="fas fa-gem text-primary fa-2x"></i>
+                                </div>
+                            </div>
+                            <h4 class="mb-3">Premium</h4>
+                            <div class="package-price mb-4">
+                                <h3 class="mb-0">2000 BDT</h3>
+                                <small class="text-muted">60 Tokens</small>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="amount" value="2000">
+                                <input type="hidden" name="token_count" value="60">
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-shopping-cart me-2"></i>Purchase
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Usage Information -->
+            <div class="mt-5">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                            Token Information
+                        </h5>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Consultation Booking</h6>
+                                        <p class="text-muted small mb-0">Book appointments with doctors using tokens</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Valid Forever</h6>
+                                        <p class="text-muted small mb-0">Your tokens never expire</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Secure Transactions</h6>
+                                        <p class="text-muted small mb-0">Pay securely using bKash</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check-circle text-success me-3"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Instant Credit</h6>
+                                        <p class="text-muted small mb-0">Tokens are added instantly after payment</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.token-icon i {
+    font-size: 1.5rem;
+}
+.package-card {
+    transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.package-card:hover {
+    transform: translateY(-5px);
+}
+.package-card.popular {
+    border: 2px solid var(--bs-primary) !important;
+}
+.popular-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+.package-icon i {
+    transition: transform 0.2s;
+}
+.package-card:hover .package-icon i {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Book Appointment - MediConnect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Book an Appointment</h2>
+
+                {% if not user.is_authenticated %}
+                    <div class="alert alert-info">
+                        Please <a href="{% url 'login' %}">login</a> to book an appointment.
+                    </div>
+                {% elif not user_profile.has_valid_access %}
+                    <div class="alert alert-warning">
+                        <h4 class="alert-heading">Access Required</h4>
+                        <p>You need a valid subscription or tokens to book appointments.</p>
+                        <hr>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'subscription_purchase' %}" class="btn btn-primary">Purchase Subscription</a>
+                            <a href="{% url 'token_purchase' %}" class="btn btn-outline-primary">Buy Tokens</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <form method="post" class="appointment-form">
+                        {% csrf_token %}
+                        
+                        <!-- Hospital Selection -->
+                        <div class="mb-4">
+                            <label for="id_hospital" class="form-label">Hospital</label>
+                            <select name="hospital" id="id_hospital" class="form-select" required>
+                                <option value="">Select Hospital</option>
+                                {% for hospital in hospitals %}
+                                    <option value="{{ hospital.id }}" 
+                                            {% if selected_hospital == hospital.id %}selected{% endif %}>
+                                        {{ hospital.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Doctor Selection (dynamically populated) -->
+                        <div class="mb-4">
+                            <label for="id_doctor" class="form-label">Doctor</label>
+                            <select name="doctor" id="id_doctor" class="form-select" required>
+                                <option value="">Select Doctor</option>
+                                {% if doctors %}
+                                    {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}" 
+                                                {% if selected_doctor == doctor.id %}selected{% endif %}>
+                                            Dr. {{ doctor.user.get_full_name }} - {{ doctor.specialization }}
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+
+                        <!-- Date and Time Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="id_date" class="form-label">Date</label>
+                                <input type="date" name="date" id="id_date" class="form-control" 
+                                       min="{{ min_date|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_time" class="form-label">Time</label>
+                                <select name="time" id="id_time" class="form-select" required>
+                                    <option value="">Select Time</option>
+                                    {% for time_slot in time_slots %}
+                                        <option value="{{ time_slot }}">{{ time_slot }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Reason for Visit -->
+                        <div class="mb-4">
+                            <label for="id_reason" class="form-label">Reason for Visit</label>
+                            <textarea name="reason" id="id_reason" class="form-control" rows="3" required></textarea>
+                        </div>
+
+                        <!-- Additional Notes -->
+                        <div class="mb-4">
+                            <label for="id_notes" class="form-label">Additional Notes (Optional)</label>
+                            <textarea name="notes" id="id_notes" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Book Appointment</button>
+                            <a href="{% url 'appointment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hospitalSelect = document.getElementById('id_hospital');
+    const doctorSelect = document.getElementById('id_doctor');
+    const dateInput = document.getElementById('id_date');
+    const timeSelect = document.getElementById('id_time');
+
+    // Update doctors when hospital is selected
+    hospitalSelect.addEventListener('change', function() {
+        const hospitalId = this.value;
+        if (hospitalId) {
+            fetch(`/api/hospitals/${hospitalId}/doctors/`)
+                .then(response => response.json())
+                .then(data => {
+                    doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+                    data.forEach(doctor => {
+                        const option = document.createElement('option');
+                        option.value = doctor.id;
+                        option.textContent = `Dr. ${doctor.user.full_name} - ${doctor.specialization}`;
+                        doctorSelect.appendChild(option);
+                    });
+                });
+        } else {
+            doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+        }
+    });
+
+    // Update available time slots when date is selected
+    function updateTimeSlots() {
+        const doctorId = doctorSelect.value;
+        const selectedDate = dateInput.value;
+        
+        if (doctorId && selectedDate) {
+            fetch(`/api/doctors/${doctorId}/available-slots/?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    timeSelect.innerHTML = '<option value="">Select Time</option>';
+                    data.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = slot;
+                        timeSelect.appendChild(option);
+                    });
+                });
+        }
+    }
+
+    doctorSelect.addEventListener('change', updateTimeSlots);
+    dateInput.addEventListener('change', updateTimeSlots);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Appointment Details - MediConnect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title mb-0">Appointment Details</h2>
+            </div>
+            <div class="card-body">
+                <!-- Status Banner -->
+                <div class="alert alert-{% if appointment.status == 'pending' %}warning
+                                    {% elif appointment.status == 'confirmed' %}success
+                                    {% elif appointment.status == 'completed' %}info
+                                    {% else %}danger{% endif %} mb-4">
+                    <h4 class="alert-heading">Status: {{ appointment.status|title }}</h4>
+                    {% if appointment.status == 'pending' %}
+                        <p class="mb-0">Your appointment is awaiting confirmation from the doctor.</p>
+                    {% elif appointment.status == 'confirmed' %}
+                        <p class="mb-0">Your appointment has been confirmed. Please arrive 15 minutes before your scheduled time.</p>
+                    {% elif appointment.status == 'completed' %}
+                        <p class="mb-0">This appointment has been completed.</p>
+                    {% else %}
+                        <p class="mb-0">This appointment has been cancelled.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Appointment Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4>Doctor Information</h4>
+                        <p><strong>Name:</strong> Dr. {{ appointment.doctor.user.get_full_name }}</p>
+                        <p><strong>Specialization:</strong> {{ appointment.doctor.specialization }}</p>
+                        <p><strong>Hospital:</strong> {{ appointment.doctor.hospitals.first.name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Schedule</h4>
+                        <p><strong>Date:</strong> {{ appointment.appointment_date|date:"F d, Y" }}</p>
+                        <p><strong>Time:</strong> {{ appointment.appointment_time|time:"g:i A" }}</p>
+                        <p><strong>Appointment Number:</strong> {{ appointment.appointment_number }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h4>Appointment Details</h4>
+                        <p><strong>Reason for Visit:</strong> {{ appointment.reason }}</p>
+                        {% if appointment.notes %}
+                            <p><strong>Additional Notes:</strong> {{ appointment.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Hospital Information -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4>Hospital Information</h4>
+                        <p><strong>Name:</strong> {{ appointment.doctor.hospitals.first.name }}</p>
+                        <p><strong>Location:</strong> {{ appointment.doctor.hospitals.first.location }}</p>
+                        {% if appointment.doctor.hospitals.first.map_url %}
+                            <a href="{{ appointment.doctor.hospitals.first.map_url }}" target="_blank" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-map-marker-alt"></i> View on Map
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'appointment_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Appointments
+                    </a>
+                    <div>
+                        {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
+                            <form method="post" action="{% url 'appointment_cancel' appointment.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger" 
+                                        onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                    <i class="fas fa-times"></i> Cancel Appointment
+                                </button>
+                            </form>
+                        {% endif %}
+                        {% if appointment.status == 'completed' %}
+                            <a href="{% url 'appointment_create' %}?doctor={{ appointment.doctor.id }}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-calendar-plus"></i> Book New Appointment
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

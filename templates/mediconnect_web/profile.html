@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Profile - MediConnect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Left Column - Profile Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="bg-primary text-white p-4">
+                    <div class="text-center position-relative">
+                        <div class="profile-picture-container mb-3">
+                            {% if user.user_profile.profile_picture %}
+                                <img src="{{ user.user_profile.profile_picture.url }}" 
+                                     class="profile-picture rounded-circle border border-3 border-white shadow" 
+                                     style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="profile-picture rounded-circle border border-3 border-white shadow bg-white d-flex align-items-center justify-content-center"
+                                     style="width: 120px; height: 120px; margin: 0 auto;">
+                                    <i class="fas fa-user text-primary" style="font-size: 48px;"></i>
+                                </div>
+                            {% endif %}
+                            <label for="profile_picture_input" class="position-absolute bottom-0 start-50 translate-middle-x mb-2">
+                                <div class="btn btn-light btn-sm rounded-circle shadow-sm">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                            </label>
+                        </div>
+                        <h4 class="mb-1">{{ user.get_full_name }}</h4>
+                        <p class="mb-2 opacity-75">{{ user.email }}</p>
+                        {% if user.is_doctor %}
+                            <span class="badge bg-white text-primary">Doctor</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Token Information -->
+                    <div class="token-info mb-4">
+                        <h6 class="text-uppercase mb-3 text-muted fw-bold">Token Balance</h6>
+                        {% if user.tokens %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="token-icon me-3">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                        <i class="fas fa-coins text-primary"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">{{ user.tokens.first.token_count }} Tokens</h5>
+                                    <small class="text-muted">Valid until {{ user.tokens.first.valid_until|date:"M d, Y" }}</small>
+                                </div>
+                            </div>
+                            <div class="token-validity">
+                                <div class="progress" style="height: 4px;">
+                                    {% with days_left=user.tokens.first.valid_until|timeuntil %}
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         style="width: {% widthratio days_left 30 100 %}%;"></div>
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-3">
+                                <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3"
+                                     style="width: 60px; height: 60px;">
+                                    <i class="fas fa-coins text-muted"></i>
+                                </div>
+                                <p class="text-muted mb-3">No active tokens</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h6 class="text-uppercase mb-3 text-muted fw-bold">Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'token_purchase' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus-circle me-2"></i>Purchase Tokens
+                            </a>
+                            {% if user.is_doctor %}
+                                <a href="{% url 'appointment_list' %}" class="btn btn-outline-success">
+                                    <i class="fas fa-calendar-check me-2"></i>View Appointments
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Profile Information -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4">Profile Information</h5>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    {{ user_form.phone_number }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {{ user_form.profile_picture }}
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Address</label>
+                                    {{ user_form.address }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if doctor_form %}
+                            <hr class="my-4">
+                            <h5 class="mb-4">Doctor Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ doctor_form.specialization|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ doctor_form.medical_license|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ doctor_form.available_from|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ doctor_form.available_to|as_crispy_field }}
+                                </div>
+                                <div class="col-12">
+                                    {{ doctor_form.hospitals|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ doctor_form.consultation_fee|as_crispy_field }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profilePicInput = document.getElementById('profile_picture_input');
+    if (profilePicInput) {
+        profilePicInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const profilePic = document.querySelector('.profile-picture');
+                    if (profilePic) {
+                        if (profilePic.tagName === 'IMG') {
+                            profilePic.src = e.target.result;
+                        } else {
+                            // If it's the default icon div, replace it with an image
+                            const newImg = document.createElement('img');
+                            newImg.src = e.target.result;
+                            newImg.className = profilePic.className;
+                            newImg.style = profilePic.style;
+                            profilePic.parentNode.replaceChild(newImg, profilePic);
+                        }
+                    }
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

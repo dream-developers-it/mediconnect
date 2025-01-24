@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}My Appointments - MediConnect{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>My Appointments</h1>
+            <a href="{% url 'appointment_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Appointment
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="date" class="form-control" value="{{ request.GET.date }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Appointments List -->
+        {% if appointments %}
+            {% regroup appointments by appointment_date|date:"F d, Y" as appointment_list %}
+            {% for date in appointment_list %}
+                <h4 class="mb-3">{{ date.grouper }}</h4>
+                <div class="row">
+                    {% for appointment in date.list %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0">
+                                            Dr. {{ appointment.doctor.user.get_full_name }}
+                                        </h5>
+                                        <span class="badge {% if appointment.status == 'pending' %}bg-warning
+                                                         {% elif appointment.status == 'confirmed' %}bg-success
+                                                         {% elif appointment.status == 'completed' %}bg-info
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ appointment.status|title }}
+                                        </span>
+                                    </div>
+                                    <p class="card-text">
+                                        <strong>Hospital:</strong> {{ appointment.doctor.hospitals.first.name }}
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Time:</strong> {{ appointment.appointment_time|time:"g:i A" }}
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Reason:</strong> {{ appointment.reason }}
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'appointment_detail' appointment.pk %}" 
+                                           class="btn btn-primary">View Details</a>
+                                        {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
+                                            <form method="post" action="{% url 'appointment_cancel' appointment.pk %}" 
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger" 
+                                                        onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">No Appointments Found</h4>
+                <p>You don't have any appointments scheduled. Would you like to book one now?</p>
+                <a href="{% url 'appointment_create' %}" class="btn btn-primary">Book Appointment</a>
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

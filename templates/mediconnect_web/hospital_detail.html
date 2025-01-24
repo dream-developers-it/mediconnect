@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ hospital.name }} - MediConnect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card mb-4">
+        <div class="row g-0">
+            <div class="col-md-4">
+                {% if hospital.image %}
+                    <img src="{{ hospital.image.url }}" class="img-fluid rounded-start" alt="{{ hospital.name }}">
+                {% else %}
+                    <img src="https://placehold.co/800x600/2563eb/ffffff?text=Hospital" class="img-fluid rounded-start" alt="{{ hospital.name }}">
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h2 class="card-title">{{ hospital.name }}</h2>
+                    <p class="card-text">{{ hospital.description }}</p>
+                    <div class="mb-3">
+                        <strong>Location:</strong> {{ hospital.location }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Contact:</strong><br>
+                        Phone: {{ hospital.contact_number }}<br>
+                        Email: {{ hospital.email }}<br>
+                        {% if hospital.website %}
+                            Website: <a href="{{ hospital.website }}" target="_blank">{{ hospital.website }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mb-4">Our Doctors</h3>
+    <div class="row">
+        {% for doctor in hospital.doctors.all %}
+            {% if doctor.is_approved %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if doctor.user.user_profile.profile_picture %}
+                            <img src="{{ doctor.user.user_profile.profile_picture.url }}" 
+                                 class="card-img-top" alt="Dr. {{ doctor.user.get_full_name }}">
+                        {% else %}
+                            <img src="https://placehold.co/400x300/2563eb/ffffff?text=Doctor" 
+                                 class="card-img-top" alt="Dr. {{ doctor.user.get_full_name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">Dr. {{ doctor.user.get_full_name }}</h5>
+                            <p class="card-text">
+                                <strong>Specialization:</strong> {{ doctor.specialization }}<br>
+                                <strong>Available Time:</strong><br>
+                                {{ doctor.available_from|time:"g:i A" }} - {{ doctor.available_to|time:"g:i A" }}<br>
+                                <strong>Consultation Fee:</strong> ${{ doctor.consultation_fee }}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'appointment_create' %}?doctor={{ doctor.id }}" 
+                                   class="btn btn-primary w-100">Book Appointment</a>
+                            {% else %}
+                                <a href="{% url 'login' %}?next={% url 'appointment_create' %}?doctor={{ doctor.id }}" 
+                                   class="btn btn-primary w-100">Login to Book</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No doctors available at this hospital yet.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
