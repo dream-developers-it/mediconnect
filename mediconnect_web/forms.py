@@ -27,11 +27,16 @@ class UserRegistrationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'})
     )
-    is_doctor = forms.ChoiceField(
+    phone_number = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'})
+    )
+    is_doctor = forms.TypedChoiceField(
         choices=USER_TYPE_CHOICES,
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
         initial=False,
-        label='Register as'
+        label='Register as',
+        coerce=lambda x: x == 'True'
     )
     password1 = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
@@ -42,10 +47,11 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'is_doctor', 'password1', 'password2')
+        fields = ('email', 'first_name', 'last_name', 'phone_number', 'is_doctor', 'password1', 'password2')
 
     def clean_is_doctor(self):
-        return self.cleaned_data['is_doctor'] == 'True'
+        is_doctor = self.cleaned_data.get('is_doctor')
+        return bool(is_doctor)
 
     def save(self, commit=True):
         user = super().save(commit=False)

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search Section -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="specialization" class="form-label">Specialization</label>
+                    <select class="form-select" id="specialization" name="specialization">
+                        <option value="">All Specializations</option>
+                        {% for code, name in specializations %}
+                            <option value="{{ code }}" {% if current_specialization == code %}selected{% endif %}>
+                                {{ name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="hospital" class="form-label">Hospital</label>
+                    <select class="form-select" id="hospital" name="hospital">
+                        <option value="">All Hospitals</option>
+                        {% for hospital in hospitals %}
+                            <option value="{{ hospital.id }}" {% if current_hospital == hospital.id %}selected{% endif %}>
+                                {{ hospital.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                    <a href="{% url 'search_doctors' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo me-2"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Doctors Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for doctor in doctors %}
+        <div class="col">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="position-relative">
+                    {% if doctor.user.user_profile.profile_picture %}
+                        <img src="{{ doctor.user.user_profile.profile_picture.url }}" class="card-img-top" alt="{{ doctor.user.get_full_name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/doctor-default.jpg' %}" class="card-img-top" alt="Default Doctor Image" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+                    <div class="position-absolute top-0 end-0 p-2">
+                        <span class="badge bg-primary">{{ doctor.get_specialization_display }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-3">Dr. {{ doctor.user.get_full_name }}</h5>
+                    <div class="mb-3">
+                        <p class="card-text mb-1">
+                            <i class="fas fa-stethoscope text-success me-2"></i>
+                            {{ doctor.get_specialization_display }}
+                        </p>
+                        <p class="card-text mb-1">
+                            <i class="fas fa-hospital text-info me-2"></i>
+                            {% for hospital in doctor.hospitals.all %}
+                                {{ hospital.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        {% if doctor.experience_years > 0 %}
+                        <p class="card-text mb-1">
+                            <i class="fas fa-user-md text-secondary me-2"></i>
+                            {{ doctor.experience_text }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-grid">
+                        <a href="{% url 'doctor_detail' doctor.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle me-2"></i>View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>No doctors found matching your criteria.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if doctors.paginator.num_pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if doctors.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ doctors.previous_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in doctors.paginator.page_range %}
+            <li class="page-item {% if doctors.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if doctors.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ doctors.next_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}
+{% endblock %}

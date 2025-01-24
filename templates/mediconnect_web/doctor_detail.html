@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Doctor Profile Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    {% if profile_picture %}
+                        <img src="{{ profile_picture.url }}" class="rounded-circle mb-3" alt="Dr. {{ doctor.user.get_full_name }}" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/doctor-default.jpg' %}" class="rounded-circle mb-3" alt="Default Doctor Image" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h4 class="card-title">Dr. {{ doctor.user.get_full_name }}</h4>
+                    <p class="text-muted mb-2">{{ doctor.specialization }}</p>
+                    <p class="text-primary mb-3">{{ doctor.experience_text }}</p>
+                    
+                    {% if doctor.services.all %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Services</h6>
+                        {% for service in doctor.services.all %}
+                            <span class="badge bg-info me-1 mb-1">{{ service.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'appointment_create' %}?doctor={{ doctor.pk }}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Doctor Details -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Doctor Information</h5>
+                    
+                    {% if doctor.bio %}
+                    <div class="mb-4">
+                        <h6 class="text-muted">About</h6>
+                        <p>{{ doctor.bio }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted">Hospital Affiliations</h6>
+                        <div class="list-group">
+                            {% for hospital in doctor.hospitals.all %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ hospital.name }}</h6>
+                                    <small class="text-muted">{{ hospital.get_division_display }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                    {{ hospital.city }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted">Consultation Hours</h6>
+                        <p class="mb-0">
+                            <i class="fas fa-clock text-info me-2"></i>
+                            {{ doctor.available_from|time:"g:i A" }} - {{ doctor.available_to|time:"g:i A" }}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-muted">Consultation Fee</h6>
+                        <p class="mb-0">
+                            <i class="fas fa-money-bill text-success me-2"></i>
+                            ৳{{ doctor.consultation_fee }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

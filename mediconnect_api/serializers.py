@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token
+from .models import UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, HospitalRating, DoctorRating, DoctorUnlock
 
 User = get_user_model()
 
@@ -61,3 +61,29 @@ class TokenSerializer(serializers.ModelSerializer):
         model = Token
         fields = ('id', 'amount', 'token_count', 'valid_until', 'created_at')
         read_only_fields = ('created_at',)
+
+class HospitalRatingSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    
+    class Meta:
+        model = HospitalRating
+        fields = ('id', 'user', 'user_name', 'hospital', 'rating', 'comment', 'created_at')
+        read_only_fields = ('user',)
+
+class DoctorRatingSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    
+    class Meta:
+        model = DoctorRating
+        fields = ('id', 'user', 'user_name', 'doctor', 'rating', 'comment', 'created_at')
+        read_only_fields = ('user',)
+
+class DoctorUnlockSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
+    hospital_name = serializers.CharField(source='hospital.name', read_only=True)
+    
+    class Meta:
+        model = DoctorUnlock
+        fields = ('id', 'user', 'doctor', 'doctor_name', 'hospital', 'hospital_name', 
+                 'unlocked_at', 'valid_until', 'is_active')
+        read_only_fields = ('user', 'unlocked_at', 'valid_until', 'is_active')
