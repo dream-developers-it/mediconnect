@@ -10,12 +10,13 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.views.decorators.http import require_POST
-from mediconnect_api.models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory
-from .forms import UserRegistrationForm, UserProfileForm, DoctorProfileForm, AppointmentForm, ContactForm, TokenPurchaseForm
+from mediconnect_api.models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory, DIVISION_CHOICES
+from .forms import UserRegistrationForm, UserProfileForm, DoctorProfileForm, AppointmentForm, ContactForm, TokenPurchaseForm, CustomAuthenticationForm
 from django.utils import timezone
 import uuid
 import requests
 from django.http import JsonResponse
+from django.db import transaction
 
 # Create your views here.
 
@@ -29,68 +30,134 @@ def home(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
+        form = UserRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save()
-            # UserProfile will be created automatically via signal
-            
-            # If registering as doctor, create DoctorProfile
-            if form.cleaned_data.get('is_doctor'):
-                DoctorProfile.objects.create(
-                    user=user,
-                    is_approved=False
-                )
-                messages.info(request, 'Your doctor profile has been created but needs approval.')
-            
-            login(request, user)
-            messages.success(request, 'Registration successful!')
-            return redirect('home')
+            try:
+                # Start transaction
+                with transaction.atomic():
+                    # Create user
+                    user = form.save(commit=False)
+                    user.is_doctor = form.cleaned_data.get('is_doctor', False)
+                    user.save()
+
+                    # Create UserProfile
+                    user_profile = UserProfile.objects.create(
+                        user=user,
+                        phone_number=form.cleaned_data.get('phone_number', '')
+                    )
+                    
+                    # If registering as doctor, create DoctorProfile
+                    if user.is_doctor:
+                        doctor_profile = DoctorProfile.objects.create(
+                            user=user,
+                            is_approved=False,
+                            gender=request.POST.get('gender', 'M'),
+                            specialization=request.POST.get('specialization', 'general'),
+                            medical_license=request.FILES.get('medical_license'),
+                            available_from='09:00',
+                            available_to='17:00',
+                            consultation_fee=0.00
+                        )
+                        messages.info(request, 'Your doctor account has been created and is pending approval. Our admin team will review your application. You will be notified once approved.')
+                        return redirect('login')
+                    
+                    # Only login if not a doctor
+                    login(request, user)
+                    messages.success(request, 'Registration successful! Please complete your profile.')
+                    return redirect('profile')
+                    
+            except Exception as e:
+                messages.error(request, f'Registration failed. Please try again. Error: {str(e)}')
+                return redirect('register')
     else:
         form = UserRegistrationForm()
     return render(request, 'mediconnect_web/register.html', {'form': form})
 
 @login_required
 def profile(request):
-    user_profile = request.user.user_profile
-    doctor_profile = None
-    if hasattr(request.user, 'doctor_profile'):
-        doctor_profile = request.user.doctor_profile
+    # Get or create user profile
+    try:
+        user_profile = request.user.user_profile
+    except UserProfile.DoesNotExist:
+        user_profile = UserProfile.objects.create(user=request.user)
     
     if request.method == 'POST':
         user_form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
-        doctor_form = None
-        if doctor_profile:
-            doctor_form = DoctorProfileForm(request.POST, request.FILES, instance=doctor_profile)
-        
-        if user_form.is_valid() and (not doctor_form or doctor_form.is_valid()):
+        if user_form.is_valid():
             user_form.save()
-            if doctor_form:
-                doctor_form.save()
-            messages.success(request, 'Profile updated successfully!')
+            messages.success(request, 'Your profile has been updated successfully!')
             return redirect('profile')
     else:
         user_form = UserProfileForm(instance=user_profile)
-        doctor_form = None
-        if doctor_profile:
-            doctor_form = DoctorProfileForm(instance=doctor_profile)
     
-    # Get user's active tokens
-    user_tokens = Token.objects.filter(
-        user=request.user,
-        valid_until__gt=timezone.now()
-    ).first()
-    
-    return render(request, 'mediconnect_web/profile.html', {
+    context = {
         'user_form': user_form,
-        'doctor_form': doctor_form,
-        'user_tokens': user_tokens,
-    })
+    }
+    
+    # If user is a doctor, get or create doctor profile
+    if hasattr(request.user, 'groups'):
+        if request.user.groups.filter(name='Doctors').exists():
+            try:
+                doctor_profile = request.user.doctor_profile
+            except DoctorProfile.DoesNotExist:
+                doctor_profile = DoctorProfile.objects.create(user=request.user)
+            
+            if request.method == 'POST':
+                doctor_form = DoctorProfileForm(request.POST, request.FILES, instance=doctor_profile)
+                if doctor_form.is_valid():
+                    doctor_form.save()
+                    messages.success(request, 'Your doctor profile has been updated successfully!')
+                    return redirect('profile')
+            else:
+                doctor_form = DoctorProfileForm(instance=doctor_profile)
+            
+            context['doctor_form'] = doctor_form
+            context['is_doctor'] = True
+    
+    # Get appointments
+    if request.user.is_doctor:
+        doctor_appointments = Appointment.objects.filter(doctor__user=request.user).order_by('-appointment_date')[:5]
+        user_appointments = None
+    else:
+        doctor_appointments = None
+        user_appointments = Appointment.objects.filter(user=request.user).order_by('-appointment_date')[:5]
+    
+    context['appointments'] = user_appointments
+    context['doctor_appointments'] = doctor_appointments
+    context['payments'] = PaymentHistory.objects.filter(user=request.user).order_by('-created_at')[:5]
+    
+    return render(request, 'mediconnect_web/profile.html', context)
 
 class HospitalListView(ListView):
     model = Hospital
     template_name = 'mediconnect_web/hospital_list.html'
     context_object_name = 'hospitals'
-    paginate_by = 12
+    paginate_by = 9
+
+    def get_queryset(self):
+        queryset = Hospital.objects.all()
+        
+        # Filter by name
+        name = self.request.GET.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        
+        # Filter by division
+        division = self.request.GET.get('division')
+        if division:
+            queryset = queryset.filter(division=division)
+        
+        # Filter by city
+        city = self.request.GET.get('city')
+        if city:
+            queryset = queryset.filter(city__icontains=city)
+        
+        return queryset.order_by('name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['divisions'] = DIVISION_CHOICES
+        return context
 
 class HospitalDetailView(DetailView):
     model = Hospital
@@ -319,6 +386,24 @@ def bkash_callback(request):
     
     return redirect('profile')
 
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            
+            # Check if user is a doctor and not approved
+            if user.is_doctor and hasattr(user, 'doctor_profile') and not user.doctor_profile.is_approved:
+                messages.warning(request, 'Your doctor account is pending approval. Please wait for admin approval.')
+                return redirect('login')
+            
+            login(request, user)
+            messages.success(request, 'Login successful!')
+            return redirect('profile')
+    else:
+        form = CustomAuthenticationForm()
+    return render(request, 'mediconnect_web/login.html', {'form': form})
+
 def contact(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
@@ -337,40 +422,48 @@ def contact(request):
     return render(request, 'mediconnect_web/contact.html', {'form': form})
 
 def search_doctors(request):
-    query = request.GET.get('query', '')
-    specialization = request.GET.get('specialization', '')
-    location = request.GET.get('location', '')
-
-    doctors = DoctorProfile.objects.filter(is_approved=True)
-
-    if query:
-        doctors = doctors.filter(
-            Q(user__first_name__icontains=query) |
-            Q(user__last_name__icontains=query) |
-            Q(specialization__icontains=query)
-        )
-
+    doctors = DoctorProfile.objects.all()
+    
+    # Filter by specialization
+    specialization = request.GET.get('specialization')
     if specialization:
-        doctors = doctors.filter(specialization__icontains=specialization)
-
-    if location:
-        doctors = doctors.filter(hospitals__location__icontains=location)
-
+        doctors = doctors.filter(specialization=specialization)
+    
+    # Filter by hospital
+    hospital_id = request.GET.get('hospital')
+    if hospital_id:
+        doctors = doctors.filter(hospitals__id=hospital_id)
+    
     # Get unique specializations for filter dropdown
-    specializations = DoctorProfile.objects.values_list('specialization', flat=True).distinct()
-    locations = Hospital.objects.values_list('location', flat=True).distinct()
-
+    specializations = DoctorProfile.SPECIALIZATION_CHOICES
+    
+    # Get hospitals for filter dropdown
+    hospitals = Hospital.objects.all().order_by('name')
+    
     # Pagination
     paginator = Paginator(doctors, 9)  # Show 9 doctors per page
     page = request.GET.get('page')
     doctors = paginator.get_page(page)
-
+    
     context = {
         'doctors': doctors,
-        'query': query,
-        'specialization': specialization,
-        'location': location,
         'specializations': specializations,
-        'locations': locations,
+        'hospitals': hospitals,
+        'current_specialization': specialization,
+        'current_hospital': hospital_id,
     }
-    return render(request, 'mediconnect_web/search_doctors.html', context)
+    return render(request, 'mediconnect_web/doctor_search.html', context)
+
+def custom_logout(request):
+    """Custom logout view."""
+    logout(request)
+    return redirect('login')  # 
+
+@login_required
+def doctor_detail(request, pk):
+    doctor = get_object_or_404(DoctorProfile, pk=pk)
+    context = {
+        'doctor': doctor,
+        'profile_picture': doctor.user.user_profile.profile_picture if hasattr(doctor.user, 'user_profile') else None,
+    }
+    return render(request, 'mediconnect_web/doctor_detail.html', context)

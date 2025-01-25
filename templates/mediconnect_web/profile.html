@@ -1,181 +1,203 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
 {% load static %}
 
-{% block title %}Profile - MediConnect{% endblock %}
-
 {% block content %}
-<div class="container py-4">
+<div class="container py-5">
     <div class="row">
-        <!-- Left Column - Profile Card -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="bg-primary text-white p-4">
-                    <div class="text-center position-relative">
-                        <div class="profile-picture-container mb-3">
-                            {% if user.user_profile.profile_picture %}
-                                <img src="{{ user.user_profile.profile_picture.url }}" 
-                                     class="profile-picture rounded-circle border border-3 border-white shadow" 
-                                     style="width: 120px; height: 120px; object-fit: cover;">
+        <!-- Profile Information -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.user_profile.profile_picture %}
+                        <img src="{{ user.user_profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle img-thumbnail mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/bkash-logo.png' %}" alt="Default Profile" class="rounded-circle img-thumbnail mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h4>{{ user.get_full_name }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    {% if user.is_doctor %}
+                        <p class="badge {% if user.doctor_profile.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                            {% if user.doctor_profile.is_approved %}
+                                Approved Doctor
                             {% else %}
-                                <div class="profile-picture rounded-circle border border-3 border-white shadow bg-white d-flex align-items-center justify-content-center"
-                                     style="width: 120px; height: 120px; margin: 0 auto;">
-                                    <i class="fas fa-user text-primary" style="font-size: 48px;"></i>
-                                </div>
+                                Pending Approval
                             {% endif %}
-                            <label for="profile_picture_input" class="position-absolute bottom-0 start-50 translate-middle-x mb-2">
-                                <div class="btn btn-light btn-sm rounded-circle shadow-sm">
-                                    <i class="fas fa-camera"></i>
-                                </div>
-                            </label>
-                        </div>
-                        <h4 class="mb-1">{{ user.get_full_name }}</h4>
-                        <p class="mb-2 opacity-75">{{ user.email }}</p>
-                        {% if user.is_doctor %}
-                            <span class="badge bg-white text-primary">Doctor</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Token Information -->
-                    <div class="token-info mb-4">
-                        <h6 class="text-uppercase mb-3 text-muted fw-bold">Token Balance</h6>
-                        {% if user.tokens %}
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="token-icon me-3">
-                                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                        <i class="fas fa-coins text-primary"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h5 class="mb-0">{{ user.tokens.first.token_count }} Tokens</h5>
-                                    <small class="text-muted">Valid until {{ user.tokens.first.valid_until|date:"M d, Y" }}</small>
-                                </div>
-                            </div>
-                            <div class="token-validity">
-                                <div class="progress" style="height: 4px;">
-                                    {% with days_left=user.tokens.first.valid_until|timeuntil %}
-                                    <div class="progress-bar bg-primary" role="progressbar" 
-                                         style="width: {% widthratio days_left 30 100 %}%;"></div>
-                                    {% endwith %}
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="text-center py-3">
-                                <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3"
-                                     style="width: 60px; height: 60px;">
-                                    <i class="fas fa-coins text-muted"></i>
-                                </div>
-                                <p class="text-muted mb-3">No active tokens</p>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <h6 class="text-uppercase mb-3 text-muted fw-bold">Quick Actions</h6>
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'token_purchase' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-plus-circle me-2"></i>Purchase Tokens
-                            </a>
-                            {% if user.is_doctor %}
-                                <a href="{% url 'appointment_list' %}" class="btn btn-outline-success">
-                                    <i class="fas fa-calendar-check me-2"></i>View Appointments
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Right Column - Profile Information -->
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <h5 class="card-title mb-4">Profile Information</h5>
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Phone Number</label>
-                                    {{ user_form.phone_number }}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                {{ user_form.profile_picture }}
-                            </div>
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label class="form-label">Address</label>
-                                    {{ user_form.address }}
-                                </div>
-                            </div>
-                        </div>
-
-                        {% if doctor_form %}
-                            <hr class="my-4">
-                            <h5 class="mb-4">Doctor Information</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    {{ doctor_form.specialization|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ doctor_form.medical_license|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ doctor_form.available_from|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ doctor_form.available_to|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ doctor_form.hospitals|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ doctor_form.consultation_fee|as_crispy_field }}
-                                </div>
-                            </div>
+        <!-- Profile Forms -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#profile">Profile Information</a>
+                        </li>
+                        {% if user.is_doctor %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#doctor">Doctor Information</a>
+                        </li>
                         {% endif %}
+                    </ul>
 
-                        <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Changes
-                            </button>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <!-- User Profile Form -->
+                        <div class="tab-pane active" id="profile">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="id_profile_picture" class="form-label">Profile Picture</label>
+                                    <input type="file" class="form-control" id="id_profile_picture" name="profile_picture" accept="image/*">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_phone_number" class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" id="id_phone_number" name="phone_number" value="{{ user.user_profile.phone_number }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="id_address" name="address" rows="3">{{ user.user_profile.address }}</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
                         </div>
-                    </form>
+
+                        <!-- Doctor Profile Information (Read-only) -->
+                        {% if user.is_doctor %}
+                        <div class="tab-pane" id="doctor">
+                            <div class="mb-3">
+                                <label class="form-label">Specialization</label>
+                                <p class="form-control-static">{{ user.doctor_profile.specialization }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Medical License</label>
+                                {% if user.doctor_profile.medical_license %}
+                                    <p class="form-control-static">License uploaded</p>
+                                {% else %}
+                                    <p class="form-control-static text-muted">No license uploaded</p>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Available Hours</label>
+                                <p class="form-control-static">{{ user.doctor_profile.available_from|time }} - {{ user.doctor_profile.available_to|time }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Consultation Fee</label>
+                                <p class="form-control-static">{{ user.doctor_profile.consultation_fee }} BDT</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Hospitals</label>
+                                <div class="list-group">
+                                    {% for hospital in user.doctor_profile.hospitals.all %}
+                                        <div class="list-group-item">{{ hospital.name }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mt-4">
+        <!-- Appointments -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Appointments</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.is_doctor %}
+                        {% if doctor_appointments %}
+                            {% for appointment in doctor_appointments %}
+                            <div class="mb-3">
+                                <h6>{{ appointment.user.get_full_name }}</h6>
+                                <p class="mb-1">Date: {{ appointment.appointment_date }}</p>
+                                <p class="mb-1">Time: {{ appointment.appointment_time }}</p>
+                                <span class="badge bg-{{ appointment.status }}">{{ appointment.status }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No recent appointments</p>
+                        {% endif %}
+                    {% else %}
+                        {% if appointments %}
+                            {% for appointment in appointments %}
+                            <div class="mb-3">
+                                <h6>Dr. {{ appointment.doctor.user.get_full_name }}</h6>
+                                <p class="mb-1">Date: {{ appointment.appointment_date }}</p>
+                                <p class="mb-1">Time: {{ appointment.appointment_time }}</p>
+                                <span class="badge bg-{{ appointment.status }}">{{ appointment.status }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No recent appointments</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Payments</h5>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                        {% for payment in payments %}
+                        <div class="mb-3">
+                            <p class="mb-1">Amount: {{ payment.amount }}</p>
+                            <p class="mb-1">Method: {{ payment.get_payment_method_display }}</p>
+                            <p class="mb-1">Date: {{ payment.created_at|date }}</p>
+                            <span class="badge bg-{{ payment.status }}">{{ payment.status }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No recent payments</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const profilePicInput = document.getElementById('profile_picture_input');
+    // Initialize Bootstrap tabs
+    var triggerTabList = [].slice.call(document.querySelectorAll('a[data-bs-toggle="tab"]'))
+    triggerTabList.forEach(function(triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl)
+        triggerEl.addEventListener('click', function(event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    })
+
+    // Handle file input change for profile picture
+    const profilePicInput = document.getElementById('id_profile_picture');
     if (profilePicInput) {
-        profilePicInput.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
+        profilePicInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const profilePic = document.querySelector('.profile-picture');
+                    const profilePic = document.querySelector('.rounded-circle.img-thumbnail');
                     if (profilePic) {
-                        if (profilePic.tagName === 'IMG') {
-                            profilePic.src = e.target.result;
-                        } else {
-                            // If it's the default icon div, replace it with an image
-                            const newImg = document.createElement('img');
-                            newImg.src = e.target.result;
-                            newImg.className = profilePic.className;
-                            newImg.style = profilePic.style;
-                            profilePic.parentNode.replaceChild(newImg, profilePic);
-                        }
+                        profilePic.src = e.target.result;
                     }
-                }
-                reader.readAsDataURL(e.target.files[0]);
+                };
+                reader.readAsDataURL(this.files[0]);
             }
         });
     }

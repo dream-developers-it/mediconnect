@@ -23,6 +23,14 @@ urlpatterns = [
     path('access/status/', views.access_status, name='access-status'),
     
     # Doctor Application URLs
-    path('doctors/apply/', views.apply_as_doctor, name='apply-as-doctor'),
-    path('doctors/approve/<int:doctor_id>/', views.approve_doctor, name='approve-doctor'),
+    path('apply-doctor/', views.apply_as_doctor, name='apply-doctor'),
+    path('approve-doctor/<int:doctor_id>/', views.approve_doctor, name='approve-doctor'),
+    
+    # Rating URLs
+    path('hospitals/<int:hospital_id>/rate/', views.rate_hospital, name='rate-hospital'),
+    path('doctors/<int:doctor_id>/rate/', views.rate_doctor, name='rate-doctor'),
+    
+    # Doctor Unlock URLs
+    path('doctors/<int:doctor_id>/hospitals/<int:hospital_id>/unlock/', views.unlock_doctor, name='unlock-doctor'),
+    path('hospitals/<int:hospital_id>/doctors/', views.hospital_doctors, name='hospital-doctors'),
 ]
