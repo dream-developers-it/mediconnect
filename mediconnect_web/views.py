@@ -10,7 +10,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.views.decorators.http import require_POST
-from mediconnect_api.models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory, DIVISION_CHOICES
+from mediconnect_api.models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory, DIVISION_CHOICES, DoctorRating, Notification
 from .forms import UserRegistrationForm, UserProfileForm, DoctorProfileForm, AppointmentForm, ContactForm, TokenPurchaseForm, CustomAuthenticationForm
 from django.utils import timezone
 import uuid
@@ -125,6 +125,7 @@ def profile(request):
     context['appointments'] = user_appointments
     context['doctor_appointments'] = doctor_appointments
     context['payments'] = PaymentHistory.objects.filter(user=request.user).order_by('-created_at')[:5]
+    context['notifications'] = request.user.notifications.all().order_by('-created_at')[:10]
     
     return render(request, 'mediconnect_web/profile.html', context)
 
@@ -421,34 +422,40 @@ def contact(request):
         form = ContactForm()
     return render(request, 'mediconnect_web/contact.html', {'form': form})
 
-def search_doctors(request):
-    doctors = DoctorProfile.objects.all()
+@login_required
+def doctor_detail(request, doctor_id):
+    doctor = get_object_or_404(DoctorProfile, id=doctor_id)
     
-    # Filter by specialization
-    specialization = request.GET.get('specialization')
+    # Get the doctor's profile picture from UserProfile
+    user_profile = doctor.user.user_profile
+    
+    context = {
+        'doctor': doctor,
+        'profile_picture': user_profile.profile_picture if user_profile else None,
+        'services': doctor.services.all() if hasattr(doctor, 'services') else None,
+        'ratings': doctor.ratings.filter(parent=None).order_by('-created_at'),
+    }
+    return render(request, 'mediconnect_web/doctor_detail.html', context)
+
+def search_doctors(request):
+    specialization = request.GET.get('specialization', '')
+    hospital_id = request.GET.get('hospital', '')
+    
+    doctors = DoctorProfile.objects.all().select_related('user__user_profile')
+    
     if specialization:
         doctors = doctors.filter(specialization=specialization)
-    
-    # Filter by hospital
-    hospital_id = request.GET.get('hospital')
     if hospital_id:
         doctors = doctors.filter(hospitals__id=hospital_id)
     
-    # Get unique specializations for filter dropdown
-    specializations = DoctorProfile.SPECIALIZATION_CHOICES
-    
-    # Get hospitals for filter dropdown
-    hospitals = Hospital.objects.all().order_by('name')
-    
-    # Pagination
     paginator = Paginator(doctors, 9)  # Show 9 doctors per page
     page = request.GET.get('page')
     doctors = paginator.get_page(page)
     
     context = {
         'doctors': doctors,
-        'specializations': specializations,
-        'hospitals': hospitals,
+        'specializations': DoctorProfile.SPECIALIZATION_CHOICES,
+        'hospitals': Hospital.objects.all(),
         'current_specialization': specialization,
         'current_hospital': hospital_id,
     }
@@ -460,10 +467,136 @@ def custom_logout(request):
     return redirect('login')  # 
 
 @login_required
-def doctor_detail(request, pk):
-    doctor = get_object_or_404(DoctorProfile, pk=pk)
-    context = {
-        'doctor': doctor,
-        'profile_picture': doctor.user.user_profile.profile_picture if hasattr(doctor.user, 'user_profile') else None,
-    }
-    return render(request, 'mediconnect_web/doctor_detail.html', context)
+def rate_doctor(request, doctor_id):
+    if request.method == 'POST':
+        doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '')
+
+        try:
+            # Check if user has already rated this doctor
+            existing_rating = DoctorRating.objects.filter(user=request.user, doctor=doctor, parent=None).first()
+            
+            if existing_rating:
+                # Update existing rating
+                existing_rating.rating = rating
+                existing_rating.comment = comment
+                existing_rating.save()
+                rating_obj = existing_rating
+                messages.success(request, 'Your rating has been updated.')
+            else:
+                # Create new rating
+                rating_obj = DoctorRating.objects.create(
+                    user=request.user,
+                    doctor=doctor,
+                    rating=rating,
+                    comment=comment
+                )
+                messages.success(request, 'Your rating has been submitted.')
+            
+            # Create notification for doctor
+            Notification.objects.create(
+                recipient=doctor.user,
+                sender=request.user,
+                notification_type='rating',
+                rating=rating_obj,  # Link to the rating
+                message=f'{request.user.get_full_name()} rated you {rating} stars.'
+            )
+
+        except Exception as e:
+            messages.error(request, 'Error submitting rating. Please try again.')
+            
+        return redirect('doctor_detail', doctor_id=doctor_id)
+        
+    return redirect('doctor_detail', doctor_id=doctor_id)
+
+@login_required
+@require_POST
+def rate_doctor_reply(request, doctor_id):
+    try:
+        doctor = get_object_or_404(DoctorProfile, id=doctor_id)
+        parent_id = request.POST.get('parent_id')
+        reply = request.POST.get('reply')
+
+        print(f"Attempting to reply to rating {parent_id} by doctor {doctor_id}")
+
+        if not parent_id:
+            messages.error(request, 'Missing parent rating ID.')
+            return redirect('doctor_detail', doctor_id=doctor_id)
+
+        if not reply:
+            messages.error(request, 'Reply cannot be empty.')
+            return redirect('doctor_detail', doctor_id=doctor_id)
+
+        # Get the original rating
+        parent_rating = get_object_or_404(DoctorRating, id=parent_id)
+        print(f"Found parent rating by user {parent_rating.user.id} for doctor {parent_rating.doctor.id}")
+
+        # Verify the user is the doctor and it's their rating being replied to
+        if not hasattr(request.user, 'doctor_profile') or request.user.doctor_profile.id != parent_rating.doctor.id:
+            messages.error(request, 'Only the doctor who received the rating can reply to it.')
+            return redirect('doctor_detail', doctor_id=doctor_id)
+
+        # Create reply as a new rating
+        reply_rating = DoctorRating.objects.create(
+            user=request.user,
+            doctor=parent_rating.doctor,  # Use the original rating's doctor
+            parent=parent_rating,
+            comment=reply,
+            rating=0  # Set rating to 0 for replies
+        )
+        
+        print(f"Created reply rating {reply_rating.id} by doctor {reply_rating.doctor.id}")
+        
+        # Create notification linking both the original rating and the reply
+        notification = Notification.objects.create(
+            recipient=parent_rating.user,
+            sender=request.user,
+            notification_type='reply',
+            rating=parent_rating,  # Link to the original rating
+            message=f'Dr. {request.user.get_full_name()} replied to your rating.'
+        )
+        
+        print(f"Created notification {notification.id} for user {parent_rating.user.id} about rating {parent_rating.id}")
+        
+        messages.success(request, 'Your reply has been posted successfully.')
+        return redirect('doctor_detail', doctor_id=parent_rating.doctor.id)
+        
+    except DoctorProfile.DoesNotExist:
+        messages.error(request, 'Doctor profile not found.')
+    except DoctorRating.DoesNotExist:
+        messages.error(request, 'Original rating not found.')
+    except Exception as e:
+        print(f"Error in rate_doctor_reply: {str(e)}")
+        messages.error(request, f'Error posting reply: {str(e)}')
+    
+    return redirect('doctor_detail', doctor_id=doctor_id)
+
+@login_required
+def mark_notification_read(request, notification_id):
+    try:
+        notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+        print(f"Processing notification {notification.id} of type {notification.notification_type}")
+        
+        notification.is_read = True
+        notification.save()
+        
+        # Determine redirect URL based on notification type and content
+        if notification.rating:
+            original_rating = notification.rating
+            doctor_id = original_rating.doctor.id
+            return redirect('doctor_detail', doctor_id=doctor_id)
+        elif notification.notification_type == 'appointment':
+            # If it's an appointment notification, redirect to appointments
+            return redirect('appointment_list')
+        elif notification.notification_type == 'token':
+            # If it's a token notification, redirect to token purchase
+            return redirect('token_purchase')
+        else:
+            # Default to profile page
+            return redirect('profile')
+            
+    except Exception as e:
+        print(f"Error in mark_notification_read: {str(e)}")
+        messages.error(request, "Error processing notification. Please try again.")
+        return redirect('profile')

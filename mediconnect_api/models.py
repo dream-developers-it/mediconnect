@@ -133,6 +133,18 @@ class DoctorProfile(models.Model):
         else:
             return f"{years} Years Experience"
 
+    @property
+    def average_rating(self):
+        ratings = self.ratings.filter(parent=None)  # Only count original ratings, not replies
+        if ratings.exists():
+            total = sum(rating.rating for rating in ratings)
+            return total / ratings.count()
+        return 0
+
+    @property
+    def total_ratings(self):
+        return self.ratings.filter(parent=None).count()  # Only count original ratings, not replies
+
     def save(self, *args, **kwargs):
         if not self.pk:  # Only set created_at for new instances
             self.created_at = timezone.now()
@@ -232,9 +244,34 @@ class HospitalRating(Rating):
 
 class DoctorRating(Rating):
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='ratings')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     class Meta:
         unique_together = ('user', 'doctor')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.get_full_name()}'s rating for {self.doctor}"
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('rating', 'New Rating'),
+        ('reply', 'Rating Reply'),
+    )
+
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    rating = models.ForeignKey(DoctorRating, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.recipient.get_full_name()} - {self.notification_type}"
 
 class DoctorUnlock(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocked_doctors')

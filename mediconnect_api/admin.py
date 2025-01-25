@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import (
     User, UserProfile, DoctorProfile, Hospital, DoctorService,
     Appointment, Token, Subscription, PaymentHistory,
-    HospitalRating, DoctorRating, DoctorUnlock
+    HospitalRating, DoctorRating, DoctorUnlock, Notification
 )
 
 class CustomUserCreationForm(UserCreationForm):
@@ -117,13 +117,26 @@ class HospitalRatingAdmin(admin.ModelAdmin):
 
 @admin.register(DoctorRating)
 class DoctorRatingAdmin(admin.ModelAdmin):
-    list_display = ('user', 'doctor', 'rating', 'created_at')
-    list_filter = ('rating', 'created_at')
-    search_fields = ('user__email', 'doctor__user__email')
+    list_display = ('user', 'doctor', 'rating', 'comment', 'is_reply', 'created_at')
+    list_filter = ('rating', 'created_at', ('parent', admin.EmptyFieldListFilter))
+    search_fields = ('user__email', 'doctor__user__email', 'comment')
     date_hierarchy = 'created_at'
+    readonly_fields = ('parent',)
+
+    def is_reply(self, obj):
+        return obj.parent is not None
+    is_reply.boolean = True
+    is_reply.short_description = 'Is Reply'
 
 @admin.register(DoctorUnlock)
 class DoctorUnlockAdmin(admin.ModelAdmin):
     list_display = ('user', 'doctor', 'valid_until')
     list_filter = ('valid_until',)
     search_fields = ('user__email', 'doctor__user__email')
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('recipient', 'sender', 'notification_type', 'is_read', 'created_at')
+    list_filter = ('notification_type', 'is_read', 'created_at')
+    search_fields = ('recipient__email', 'sender__email', 'message')
+    ordering = ('-created_at',)

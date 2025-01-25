@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, HospitalRating, DoctorRating, DoctorUnlock
+from .models import UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, HospitalRating, DoctorRating, DoctorUnlock, Notification
 
 User = get_user_model()
 
@@ -32,13 +32,21 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     full_name = serializers.CharField(source='user.get_full_name', read_only=True)
     hospitals = HospitalSerializer(many=True, read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
+    total_ratings = serializers.IntegerField(read_only=True)
+    ratings = serializers.SerializerMethodField()
     
     class Meta:
         model = DoctorProfile
         fields = ('id', 'email', 'full_name', 'hospitals', 'specialization', 
                  'medical_documents', 'appointment_number', 'is_approved',
-                 'created_at', 'updated_at')
+                 'created_at', 'updated_at', 'average_rating', 'total_ratings', 'ratings')
         read_only_fields = ('is_approved',)
+
+    def get_ratings(self, obj):
+        # Only get parent ratings (not replies)
+        ratings = obj.ratings.filter(parent=None)
+        return DoctorRatingSerializer(ratings, many=True).data
 
 class AppointmentSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
@@ -72,11 +80,18 @@ class HospitalRatingSerializer(serializers.ModelSerializer):
 
 class DoctorRatingSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    replies = serializers.SerializerMethodField()
     
     class Meta:
         model = DoctorRating
-        fields = ('id', 'user', 'user_name', 'doctor', 'rating', 'comment', 'created_at')
+        fields = ('id', 'user', 'user_name', 'doctor', 'rating', 'comment', 'created_at', 'replies')
         read_only_fields = ('user',)
+
+    def get_replies(self, obj):
+        if obj.parent is None:  # Only get replies for parent ratings
+            replies = obj.replies.all()
+            return DoctorRatingSerializer(replies, many=True).data
+        return []
 
 class DoctorUnlockSerializer(serializers.ModelSerializer):
     doctor_name = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
@@ -87,3 +102,8 @@ class DoctorUnlockSerializer(serializers.ModelSerializer):
         fields = ('id', 'user', 'doctor', 'doctor_name', 'hospital', 'hospital_name', 
                  'unlocked_at', 'valid_until', 'is_active')
         read_only_fields = ('user', 'unlocked_at', 'valid_until', 'is_active')
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'recipient', 'sender', 'notification_type', 'rating', 'message', 'is_read', 'created_at']

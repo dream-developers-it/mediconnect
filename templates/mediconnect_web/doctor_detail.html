@@ -8,13 +8,13 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-body text-center">
-                    {% if profile_picture %}
-                        <img src="{{ profile_picture.url }}" class="rounded-circle mb-3" alt="Dr. {{ doctor.user.get_full_name }}" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% if doctor.user.user_profile and doctor.user.user_profile.profile_picture %}
+                        <img src="{{ doctor.user.user_profile.profile_picture.url }}" class="rounded-circle mb-3" alt="Dr. {{ doctor.user.get_full_name }}" style="width: 150px; height: 150px; object-fit: cover;">
                     {% else %}
                         <img src="{% static 'images/doctor-default.jpg' %}" class="rounded-circle mb-3" alt="Default Doctor Image" style="width: 150px; height: 150px; object-fit: cover;">
                     {% endif %}
                     <h4 class="card-title">Dr. {{ doctor.user.get_full_name }}</h4>
-                    <p class="text-muted mb-2">{{ doctor.specialization }}</p>
+                    <p class="text-muted mb-2">{{ doctor.get_specialization_display }}</p>
                     <p class="text-primary mb-3">{{ doctor.experience_text }}</p>
                     
                     {% if doctor.services.all %}
@@ -85,5 +85,228 @@
             </div>
         </div>
     </div>
+    
+    <!-- Ratings and Comments Section -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="overall-rating">
+                        <h2>Overall Rating</h2>
+                        <div class="rating-number">{{ doctor.average_rating|floatformat:1 }}</div>
+                        <div class="stars text-warning">
+                            {% with ''|center:5 as range %}
+                            {% for _ in range %}
+                                {% if forloop.counter <= doctor.average_rating %}
+                                <span class="star">★</span>
+                                {% else %}
+                                <span class="star">☆</span>
+                                {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <p class="text-muted">Based on {{ doctor.total_ratings }} {% if doctor.total_ratings == 1 %}review{% else %}reviews{% endif %}</p>
+                    </div>
+
+                    {% if user.is_authenticated and not user.is_doctor %}
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Rate this Doctor</h5>
+                            <form action="{% url 'rate_doctor' doctor.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+                                <div class="mb-3">
+                                    <label class="form-label">Rating:</label>
+                                    <div class="rating-input">
+                                        <input type="radio" id="star5" name="rating" value="5" {% if user_rating.rating == 5 %}checked{% endif %}>
+                                        <label for="star5" title="5 stars"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star4" name="rating" value="4" {% if user_rating.rating == 4 %}checked{% endif %}>
+                                        <label for="star4" title="4 stars"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star3" name="rating" value="3" {% if user_rating.rating == 3 %}checked{% endif %}>
+                                        <label for="star3" title="3 stars"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star2" name="rating" value="2" {% if user_rating.rating == 2 %}checked{% endif %}>
+                                        <label for="star2" title="2 stars"><i class="fas fa-star"></i></label>
+                                        <input type="radio" id="star1" name="rating" value="1" {% if user_rating.rating == 1 %}checked{% endif %}>
+                                        <label for="star1" title="1 star"><i class="fas fa-star"></i></label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="comment" class="form-label">Comment:</label>
+                                    <textarea class="form-control" id="comment" name="comment" rows="3">{{ user_rating.comment }}</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit Rating</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="reviews-section mt-4">
+                        <h3>Reviews & Comments</h3>
+                        <div class="reviews-list">
+                            {% for rating in doctor.ratings.all %}
+                            {% if not rating.parent %}
+                            <div class="review-item mb-4 pb-3 border-bottom">
+                                <div class="d-flex align-items-start">
+                                    <!-- User Profile Picture -->
+                                    <div class="me-3">
+                                        {% if rating.user.user_profile and rating.user.user_profile.profile_picture %}
+                                            <img src="{{ rating.user.user_profile.profile_picture.url }}" 
+                                                 class="rounded-circle" 
+                                                 alt="{{ rating.user.get_full_name }}"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <img src="{% static 'images/doctor-default.jpg' %}" 
+                                                 class="rounded-circle" 
+                                                 alt="Default Profile"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">{{ rating.user.get_full_name }}</h6>
+                                                <div class="text-warning mb-2">
+                                                    {% for i in "54321" %}
+                                                    {% if forloop.counter <= rating.rating %}
+                                                    <span class="star">★</span>
+                                                    {% else %}
+                                                    <span class="star">☆</span>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ rating.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <p class="mb-3">{{ rating.comment }}</p>
+
+                                        <!-- Doctor's Reply -->
+                                        {% for reply in rating.replies.all %}
+                                        <div class="doctor-reply ms-4 p-3 bg-light rounded">
+                                            <div class="d-flex align-items-start">
+                                                <!-- Doctor Profile Picture -->
+                                                <div class="me-3">
+                                                    {% if reply.user.user_profile and reply.user.user_profile.profile_picture %}
+                                                        <img src="{{ reply.user.user_profile.profile_picture.url }}" 
+                                                             class="rounded-circle" 
+                                                             alt="Dr. {{ reply.user.get_full_name }}"
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% else %}
+                                                        <img src="{% static 'images/doctor-default.jpg' %}" 
+                                                             class="rounded-circle" 
+                                                             alt="Default Doctor Profile"
+                                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <h6 class="mb-1">Dr. {{ reply.user.get_full_name }}</h6>
+                                                            <small class="text-primary">Doctor's Response</small>
+                                                        </div>
+                                                        <small class="text-muted">{{ reply.created_at|date:"M d, Y" }}</small>
+                                                    </div>
+                                                    <p class="mb-0 mt-2">{{ reply.comment }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+
+                                        <!-- Reply Form for Doctor -->
+                                        {% if user.is_authenticated and user == doctor.user and not rating.replies.exists %}
+                                        <div class="reply-form mt-3 ms-4">
+                                            <form method="post" action="{% url 'rate_doctor_reply' doctor.id %}" class="mt-2">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="parent_id" value="{{ rating.id }}">
+                                                <div class="mb-2">
+                                                    <textarea class="form-control" name="reply" rows="2" required placeholder="Write your response..."></textarea>
+                                                </div>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Post Response</button>
+                                            </form>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% empty %}
+                            <div class="text-center text-muted py-4">
+                                <p class="mb-0">No reviews yet. Be the first to rate this doctor!</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Doctor's Notifications Section (Only visible to the doctor) -->
+    {% if user.is_authenticated and user == doctor.user %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Notifications</h5>
+                        <span class="badge bg-primary" id="unread-count">{{ unread_notifications_count }}</span>
+                    </div>
+                    <div class="notifications-list">
+                        {% for notification in notifications %}
+                        <div class="notification-item p-3 {% if not notification.is_read %}bg-light{% endif %} border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <p class="mb-1">{{ notification.message }}</p>
+                                    <small class="text-muted">{{ notification.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                {% if not notification.is_read %}
+                                <form method="post" action="{% url 'mark_notification_read' notification.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Mark as Read</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center mb-0">No notifications yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<!-- CSS for Star Rating -->
+<style>
+    .rating-input {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+    .rating-input input {
+        display: none;
+    }
+    .rating-input label {
+        color: #ddd;
+        font-size: 24px;
+        padding: 0 2px;
+        cursor: pointer;
+    }
+    .rating-input label:hover,
+    .rating-input label:hover ~ label,
+    .rating-input input:checked ~ label {
+        color: #ffd700;
+    }
+    .star {
+        font-size: 18px;
+        color: #ffd700;
+    }
+</style>
 {% endblock %}

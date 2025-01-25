@@ -30,7 +30,11 @@ urlpatterns = [
     
     # Profile Management
     path('profile/', views.profile, name='profile'),
-    path('doctor/<int:pk>/', views.doctor_detail, name='doctor_detail'),
+    # Doctor URLs
+    path('doctor/<int:doctor_id>/', views.doctor_detail, name='doctor_detail'),
+    path('doctor/<int:doctor_id>/rate/', views.rate_doctor, name='rate_doctor'),
+    path('doctor/<int:doctor_id>/rate/reply/', views.rate_doctor_reply, name='rate_doctor_reply'),
+    path('notification/<int:notification_id>/mark-read/', views.mark_notification_read, name='mark_notification_read'),
     
     # Hospitals
     path('hospitals/', views.HospitalListView.as_view(), name='hospital_list'),

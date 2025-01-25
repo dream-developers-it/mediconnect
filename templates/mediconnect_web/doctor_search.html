@@ -7,9 +7,9 @@
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="specialization" class="form-label">Specialization</label>
-                    <select class="form-select" id="specialization" name="specialization">
+                    <select class="form-select shadow-sm" id="specialization" name="specialization">
                         <option value="">All Specializations</option>
                         {% for code, name in specializations %}
                             <option value="{{ code }}" {% if current_specialization == code %}selected{% endif %}>
@@ -18,9 +18,9 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="hospital" class="form-label">Hospital</label>
-                    <select class="form-select" id="hospital" name="hospital">
+                    <select class="form-select shadow-sm" id="hospital" name="hospital">
                         <option value="">All Hospitals</option>
                         {% for hospital in hospitals %}
                             <option value="{{ hospital.id }}" {% if current_hospital == hospital.id %}selected{% endif %}>
@@ -29,13 +29,10 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-search me-2"></i>Search
                     </button>
-                    <a href="{% url 'search_doctors' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-redo me-2"></i>Reset
-                    </a>
                 </div>
             </form>
         </div>
@@ -47,41 +44,67 @@
         <div class="col">
             <div class="card h-100 shadow-sm hover-shadow">
                 <div class="position-relative">
-                    {% if doctor.user.user_profile.profile_picture %}
-                        <img src="{{ doctor.user.user_profile.profile_picture.url }}" class="card-img-top" alt="{{ doctor.user.get_full_name }}" style="height: 200px; object-fit: cover;">
+                    {% if doctor.user.user_profile and doctor.user.user_profile.profile_picture %}
+                        <img src="{{ doctor.user.user_profile.profile_picture.url }}" class="card-img-top" alt="{{ doctor.user.get_full_name }}"
+                             style="height: 200px; object-fit: cover;">
                     {% else %}
-                        <img src="{% static 'images/doctor-default.jpg' %}" class="card-img-top" alt="Default Doctor Image" style="height: 200px; object-fit: cover;">
+                        <img src="{% static 'images/doctor-default.jpg' %}" class="card-img-top" alt="Default Doctor Image"
+                             style="height: 200px; object-fit: cover;">
                     {% endif %}
                     <div class="position-absolute top-0 end-0 p-2">
-                        <span class="badge bg-primary">{{ doctor.get_specialization_display }}</span>
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="fas fa-stethoscope me-1"></i>{{ doctor.get_specialization_display }}
+                        </span>
                     </div>
                 </div>
-                <div class="card-body">
-                    <h5 class="card-title text-primary mb-3">Dr. {{ doctor.user.get_full_name }}</h5>
-                    <div class="mb-3">
-                        <p class="card-text mb-1">
-                            <i class="fas fa-stethoscope text-success me-2"></i>
-                            {{ doctor.get_specialization_display }}
-                        </p>
-                        <p class="card-text mb-1">
-                            <i class="fas fa-hospital text-info me-2"></i>
-                            {% for hospital in doctor.hospitals.all %}
-                                {{ hospital.name }}{% if not forloop.last %}, {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title mb-2">Dr. {{ doctor.user.get_full_name }}</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="text-warning me-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= doctor.average_rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
                             {% endfor %}
-                        </p>
+                        </div>
+                        <small class="text-muted">({{ doctor.total_ratings }} reviews)</small>
+                    </div>
+                    <div class="card-text mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-hospital text-primary me-2"></i>
+                            <span class="text-truncate">
+                                {% for hospital in doctor.hospitals.all %}
+                                    {{ hospital.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
                         {% if doctor.experience_years > 0 %}
-                        <p class="card-text mb-1">
-                            <i class="fas fa-user-md text-secondary me-2"></i>
-                            {{ doctor.experience_text }}
-                        </p>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-md text-success me-2"></i>
+                            <span>{{ doctor.experience_text }}</span>
+                        </div>
                         {% endif %}
                     </div>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <div class="d-grid">
-                        <a href="{% url 'doctor_detail' doctor.pk %}" class="btn btn-outline-primary">
-                            <i class="fas fa-info-circle me-2"></i>View Profile
-                        </a>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            {% if user.is_authenticated %}
+                                <div class="btn-group">
+                                    <a href="{% url 'doctor_detail' doctor.id %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-info-circle me-1"></i>Profile
+                                    </a>
+                                    <a href="{% url 'appointment_create' %}?doctor={{ doctor.id }}" class="btn btn-primary">
+                                        <i class="fas fa-calendar-check me-1"></i>Book Now
+                                    </a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'login' %}?next={% url 'appointment_create' %}?doctor={{ doctor.id }}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login to Book
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -101,8 +124,8 @@
         <ul class="pagination justify-content-center">
             {% if doctors.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ doctors.previous_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
+                <a class="page-link" href="?page={{ doctors.previous_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i>
                 </a>
             </li>
             {% endif %}
@@ -115,8 +138,8 @@
 
             {% if doctors.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ doctors.next_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
+                <a class="page-link" href="?page={{ doctors.next_page_number }}{% if current_specialization %}&specialization={{ current_specialization }}{% endif %}{% if current_hospital %}&hospital={{ current_hospital }}{% endif %}">
+                    <i class="fas fa-chevron-right"></i>
                 </a>
             </li>
             {% endif %}
@@ -127,10 +150,38 @@
 
 {% block extra_css %}
 <style>
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
     .hover-shadow:hover {
         transform: translateY(-5px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-        transition: all 0.3s ease;
+    }
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+    .btn-group .btn {
+        flex: 1;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+    }
+    .form-select, .form-control {
+        border-radius: 8px;
+    }
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+    .card-img-top {
+        border-bottom: 1px solid rgba(0,0,0,0.1);
     }
 </style>
 {% endblock %}

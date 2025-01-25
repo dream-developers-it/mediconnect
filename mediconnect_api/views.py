@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from knox.models import AuthToken
 from django.utils import timezone
 from datetime import timedelta
-from .models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory, HospitalRating, DoctorRating, DoctorUnlock
+from .models import User, UserProfile, DoctorProfile, Hospital, Appointment, Subscription, Token, PaymentHistory, HospitalRating, DoctorRating, DoctorUnlock, Notification
 from .serializers import (
     UserSerializer, 
     UserProfileSerializer, 
@@ -18,7 +18,8 @@ from .serializers import (
     TokenSerializer,
     HospitalRatingSerializer,
     DoctorRatingSerializer,
-    DoctorUnlockSerializer
+    DoctorUnlockSerializer,
+    NotificationSerializer
 )
 
 # Authentication Views
@@ -288,20 +289,57 @@ def rate_hospital(request, hospital_id):
 def rate_doctor(request, doctor_id):
     try:
         doctor = DoctorProfile.objects.get(id=doctor_id)
-        rating = request.data.get('rating')
-        comment = request.data.get('comment', '')
         
-        if not 1 <= rating <= 5:
-            return Response({'error': 'Rating must be between 1 and 5'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        rating_obj, created = DoctorRating.objects.update_or_create(
+        # Check if this is a reply to another rating
+        parent_id = request.data.get('parent_id')
+        parent_rating = None
+        if parent_id:
+            parent_rating = DoctorRating.objects.get(id=parent_id)
+            # Only doctor can reply to ratings
+            if request.user != doctor.user:
+                return Response({'error': 'Only the doctor can reply to ratings'}, 
+                              status=status.HTTP_403_FORBIDDEN)
+        else:
+            # Check if user has already rated this doctor (only for new ratings, not replies)
+            if DoctorRating.objects.filter(user=request.user, doctor=doctor, parent=None).exists():
+                return Response({'error': 'You have already rated this doctor'}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+        
+        rating = DoctorRating.objects.create(
             user=request.user,
             doctor=doctor,
-            defaults={'rating': rating, 'comment': comment}
+            rating=request.data.get('rating', 0) if not parent_id else 0,  # Only parent ratings have rating value
+            comment=request.data.get('comment', ''),
+            parent=parent_rating
         )
-        return Response({'message': 'Rating submitted successfully'}, status=status.HTTP_201_CREATED)
+        
+        if parent_id:
+            # Create notification for reply
+            Notification.objects.create(
+                recipient=parent_rating.user,
+                sender=request.user,
+                notification_type='reply',
+                rating=rating,
+                message=f"{request.user.get_full_name()} replied to your rating"
+            )
+        else:
+            # Create notification for new rating
+            Notification.objects.create(
+                recipient=doctor.user,
+                sender=request.user,
+                notification_type='rating',
+                rating=rating,
+                message=f"{request.user.get_full_name()} left you a new rating"
+            )
+        
+        serializer = DoctorRatingSerializer(rating)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     except DoctorProfile.DoesNotExist:
         return Response({'error': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+    except DoctorRating.DoesNotExist:
+        return Response({'error': 'Parent rating not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
