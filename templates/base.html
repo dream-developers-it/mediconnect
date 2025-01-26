@@ -115,18 +115,24 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="{% url 'home' %}">Home</a>
+                        <a class="nav-link px-3" href="{% url 'hospital_list' %}">
+                            <i class="fas fa-hospital"></i> Hospitals
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="{% url 'hospital_list' %}">Hospitals</a>
+                        <a class="nav-link px-3" href="{% url 'search_doctors' %}">
+                            <i class="fas fa-user-md"></i> Doctors
+                        </a>
                     </li>
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="{% url 'appointment_list' %}">Appointments</a>
+                        <a class="nav-link px-3" href="{% url 'appointment_list' %}">
+                            <i class="fas fa-calendar-check"></i> Appointments
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3" href="{% url 'token_purchase' %}">
-                            Tokens
+                            <i class="fas fa-coins"></i> Tokens
                             {% with user_tokens=user.tokens.all %}
                                 {% if user_tokens %}
                                     <span class="badge bg-primary">

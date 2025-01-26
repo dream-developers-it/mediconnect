@@ -28,6 +28,52 @@ def home(request):
         'doctors': doctors,
     })
 
+# def register(request):
+#     if request.method == 'POST':
+#         form = UserRegistrationForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             try:
+#                 # Start transaction
+#                 with transaction.atomic():
+#                     # Create user
+#                     user = form.save(commit=False)
+#                     user.is_doctor = form.cleaned_data.get('is_doctor', False)
+#                     user.save()
+
+#                     # Create UserProfile
+#                     user_profile = UserProfile.objects.create(
+#                         user=user,
+#                         phone_number=form.cleaned_data.get('phone_number', '')
+#                     )
+                    
+#                     # If registering as doctor, create DoctorProfile
+#                     if user.is_doctor:
+#                         doctor_profile = DoctorProfile.objects.create(
+#                             user=user,
+#                             is_approved=False,
+#                             gender=request.POST.get('gender', 'M'),
+#                             specialization=request.POST.get('specialization', 'general'),
+#                             medical_license=request.FILES.get('medical_license'),
+#                             available_from='09:00',
+#                             available_to='17:00',
+#                             consultation_fee=0.00
+#                         )
+#                         messages.info(request, 'Your doctor account has been created and is pending approval. Our admin team will review your application. You will be notified once approved.')
+#                         return redirect('login')
+                    
+#                     # Only login if not a doctor
+#                     login(request, user)
+#                     messages.success(request, 'Registration successful! Please complete your profile.')
+#                     return redirect('profile')
+                    
+#             except Exception as e:
+#                 messages.error(request, f'Registration failed. Please try again. Error: {str(e)}')
+#                 return redirect('register')
+#     else:
+#         form = UserRegistrationForm()
+#     return render(request, 'mediconnect_web/register.html', {'form': form})
+
+
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
@@ -72,6 +118,7 @@ def register(request):
     else:
         form = UserRegistrationForm()
     return render(request, 'mediconnect_web/register.html', {'form': form})
+
 
 @login_required
 def profile(request):

@@ -177,6 +177,52 @@
             font-size: 16px; /* Prevents zoom on mobile */
         }
     }
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-wrapper i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 16px;
+        z-index: 1;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 12px 12px 40px; /* Increased left padding for icon */
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        background: #f9fafb;
+    }
+
+    .form-control:focus {
+        border-color: #2563eb;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    /* Update form-group spacing */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #4b5563;
+        font-size: 14px;
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -195,34 +241,52 @@
             <h1 class="login-title">Welcome Back!</h1>
         </div>
 
-        <form method="post">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
-            
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
             <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <i class="fas fa-envelope"></i>
-                <input type="email" 
-                       class="form-control" 
-                       name="email" 
-                       placeholder="Enter your email"
-                       required>
-                {% if form.email.errors %}
-                <div class="error-message">{{ form.email.errors }}</div>
+                <label for="{{ form.username.id_for_label }}">Email Address</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope"></i>
+                    {{ form.username }}
+                </div>
+                {% if form.username.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.username.errors }}
+                    </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label class="form-label">Password</label>
-                <i class="fas fa-lock"></i>
-                <input type="password" 
-                       class="form-control" 
-                       name="password" 
-                       placeholder="Enter your password"
-                       required>
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    {{ form.password }}
+                </div>
                 {% if form.password.errors %}
-                <div class="error-message">{{ form.password.errors }}</div>
+                    <div class="invalid-feedback d-block">
+                        {{ form.password.errors }}
+                    </div>
                 {% endif %}
             </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
             <button type="submit" class="btn btn-login">Sign In</button>
         </form>
