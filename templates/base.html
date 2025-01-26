@@ -100,50 +100,53 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- Updated Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-clinic-medical me-2"></i>MediConnect
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                <i class="fas fa-clinic-medical text-primary me-2"></i>
+                <span class="fw-bold">MediConnect</span>
             </a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                        <a class="nav-link px-3" href="{% url 'home' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'hospital_list' %}">Hospitals</a>
+                        <a class="nav-link px-3" href="{% url 'hospital_list' %}">Hospitals</a>
                     </li>
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'appointment_list' %}">Appointments</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'token_purchase' %}">
-                                Tokens
-                                {% with user_tokens=user.tokens.all %}
-                                    {% if user_tokens %}
-                                        <span class="badge bg-light text-primary">
-                                            {% for token in user_tokens %}
-                                                {{ token.count }}
-                                            {% endfor %}
-                                        </span>
-                                    {% endif %}
-                                {% endwith %}
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'appointment_list' %}">Appointments</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'token_purchase' %}">
+                            Tokens
+                            {% with user_tokens=user.tokens.all %}
+                                {% if user_tokens %}
+                                    <span class="badge bg-primary">
+                                        {% for token in user_tokens %}
+                                            {{ token.count }}
+                                        {% endfor %}
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
-                
+
                 <!-- Search Form -->
                 <form class="d-flex me-3" action="{% url 'search_doctors' %}" method="get">
                     <div class="input-group">
                         <input type="text" name="q" class="form-control" placeholder="Search doctors..." 
                                aria-label="Search" value="{{ request.GET.q }}">
-                        <button class="btn btn-light" type="submit">
+                        <button class="btn btn-primary" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -152,45 +155,45 @@
                 <!-- User Menu -->
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link position-relative" href="#" data-bs-toggle="modal" data-bs-target="#notificationModal">
-                                <i class="fas fa-bell notification-icon"></i>
-                                {% if unread_notifications_count > 0 %}
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
-                                    {{ unread_notifications_count }}
-                                </span>
-                                {% endif %}
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                {% if user.user_profile.profile_picture %}
-                                    <img src="{{ user.user_profile.profile_picture.url }}" 
-                                         class="rounded-circle me-1" 
-                                         style="width: 32px; height: 32px; object-fit: cover;">
-                                {% else %}
-                                    <i class="fas fa-user-circle me-1"></i>
-                                {% endif %}
-                                {{ user.get_full_name|default:user.email }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{% url 'profile' %}">
-                                    <i class="fas fa-user me-2"></i>Profile
-                                </a></li>
-                                <li><a class="dropdown-item" href="{% url 'token_purchase' %}">
-                                    <i class="fas fa-coins me-2"></i>Purchase Tokens
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                </a></li>
-                            </ul>
-                        </li>
+                    <li class="nav-item me-2">
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="modal" data-bs-target="#notificationModal">
+                            <i class="fas fa-bell fs-5"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            {% if user.user_profile.profile_picture %}
+                                <img src="{{ user.user_profile.profile_picture.url }}" 
+                                     class="rounded-circle me-2" 
+                                     style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-user-circle fs-5 me-2"></i>
+                            {% endif %}
+                            <span>{{ user.get_full_name|default:user.email }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'token_purchase' %}">
+                                <i class="fas fa-coins me-2"></i>Purchase Tokens
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a href="{% url 'login' %}" class="btn btn-light me-2">Login</a>
-                            <a href="{% url 'register' %}" class="btn btn-outline-light">Register</a>
-                        </li>
+                    <li class="nav-item d-flex gap-2">
+                        <a href="{% url 'login' %}" class="btn btn-outline-primary">Login</a>
+                        <a href="{% url 'register' %}" class="btn btn-primary">Register</a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
@@ -274,14 +277,14 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Contact Us</h5>
-                    <address>
-                        <p>Email: info@mediconnect.com<br>
-                        Phone: +1 234 567 890</p>
-                    </address>
+                    <div class="footer-contact">
+                        <p><i class="fas fa-envelope me-2"></i>contact.dream.developers@gmail.com</p>
+                        <p><i class="fas fa-phone me-2"></i>+8801819-777-288</p>
+                    </div>
                 </div>
             </div>
             <div class="text-center mt-3">
-                <p>&copy; {% now "Y" %} MediConnect. All rights reserved.</p>
+                <p>&copy; 2024-{% now "Y" %} MediConnect. All rights reserved.</p>
             </div>
         </div>
     </footer>

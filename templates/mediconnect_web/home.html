@@ -5,21 +5,229 @@
 
 {% block extra_css %}
 <style>
+    /* Hero Section Styles */
     .hero-section {
-        background: linear-gradient(135deg, #0d6efd 0%, #0099ff 100%);
+        background: linear-gradient(to right, 
+            rgba(37, 99, 235, 0.95) 0%, 
+            rgba(37, 99, 235, 0.85) 50%,
+            rgba(37, 99, 235, 0.4) 100%), 
+            url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80') right center/cover;
+        padding: 100px 0;
         position: relative;
         overflow: hidden;
     }
-    
-    .hero-section::before {
-        content: '';
+
+    .hero-content {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .hero-text {
+        flex: 0 0 50%;  /* Takes exactly 50% of the space */
+        color: white;
+        padding-right: 20px;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .hero-btn {
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: transform 0.2s;
+    }
+
+    .hero-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .hero-btn-primary {
+        background: white;
+        color: #2563eb;
+    }
+
+    .hero-btn-outline {
+        border: 2px solid white;
+        color: white;
+    }
+
+    /* Search Section Styles */
+    .search-section {
+        margin-top: -30px;
+        position: relative;
+        z-index: 10;
+    }
+
+    .search-container {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 15px;
+    }
+
+    .search-input {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-input i {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80') center/cover;
-        opacity: 0.1;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+    }
+
+    .search-input input {
+        width: 100%;
+        padding: 12px 12px 12px 45px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .search-btn {
+        background: #2563eb;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .search-btn:hover {
+        background: #1d4ed8;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        padding: 15px 0;  /* Even smaller padding */
+        background: #f8fafc;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;  /* Smaller gap */
+        max-width: 600px;  /* Reduced max width */
+        margin: 0 auto;
+        padding: 0 10px;
+    }
+
+    .stat-item {
+        background: white;
+        padding: 10px 8px;  /* Smaller padding */
+        border-radius: 6px;  /* Smaller radius */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-1px);  /* Smaller lift */
+        box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1);
+    }
+
+    .stat-number {
+        font-size: 1.5rem;  /* Smaller font */
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 2px;  /* Smaller margin */
+        background: linear-gradient(45deg, #2563eb, #1d4ed8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #4b5563;
+        font-size: 0.75rem;  /* Smaller font */
+        font-weight: 500;
+        margin: 0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .hero-section {
+            background: linear-gradient(rgba(37, 99, 235, 0.9), rgba(30, 64, 175, 0.85)),
+                        url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80') center/cover;
+            padding: 60px 0;
+        }
+
+        .hero-text {
+            flex: 0 0 100%;
+            text-align: center;
+            padding-right: 0;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+        }
+
+        .hero-buttons {
+            justify-content: center;
+        }
+
+        .search-form {
+            flex-direction: column;
+        }
+
+        .search-btn {
+            width: 100%;
+        }
+
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 300px;
+            gap: 8px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+            max-width: 250px;
+            gap: 6px;
+        }
+
+        .stat-item {
+            padding: 8px 6px;
+        }
+
+        .stat-number {
+            font-size: 1.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+        }
     }
 
     .feature-card {
@@ -55,12 +263,6 @@
     .hospital-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-
-    .stats-counter {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #0d6efd;
     }
 
     .section-heading {
@@ -104,101 +306,186 @@
         color: white;
         font-size: 2rem;
     }
+
+    /* Video Modal Styles */
+    .video-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .video-modal.active {
+        display: flex;
+    }
+
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 560px; /* Reduced from 640px */
+        padding-top: 40%; /* Reduced from 56.25% for shorter height */
+        margin: 0 auto;
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 6px;
+    }
+
+    .close-video {
+        position: absolute;
+        top: -35px;
+        right: -5px;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 5px;
+        z-index: 1001;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+
+    .close-video:hover {
+        opacity: 1;
+    }
+
+    .hero-btn-video {
+        background: white;
+        color: #2563eb;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        border-radius: 6px;
+    }
+
+    .hero-btn-video i {
+        font-size: 1.1em;
+    }
+
+    /* Responsive styles for video modal */
+    @media (max-width: 768px) {
+        .video-container {
+            max-width: 400px;
+            padding-top: 45%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .video-container {
+            max-width: 320px;
+            padding-top: 50%;
+        }
+        .video-modal {
+            padding: 10px;
+        }
+    }
+
+    /* For very small screens */
+    @media (max-width: 320px) {
+        .video-container {
+            padding-top: 55%;
+        }
+    }
+
+    /* For landscape mode */
+    @media (max-height: 450px) {
+        .video-container {
+            padding-top: 35%;
+            max-width: 400px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section text-white position-relative">
-    <div class="container py-4">
-        <div class="row align-items-center">
-            <div class="col-lg-5 mb-4 mb-lg-0">
-                <h1 class="display-5 fw-bold mb-3">Your Health, Our Priority</h1>
-                <p class="lead mb-4">Connect with top healthcare professionals and leading hospitals through our innovative platform.</p>
-                <div class="d-flex gap-3">
-                    {% if not user.is_authenticated %}
-                        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4">Get Started</a>
-                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4">Sign In</a>
-                    {% else %}
-                        <a href="{% url 'hospital_list' %}" class="btn btn-light btn-lg px-4">Find Hospitals</a>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="position-relative" style="max-width: 600px; margin: 0 auto;">
-                    <img src="https://img.freepik.com/free-vector/hospital-building-concept-illustration_114360-8440.jpg" 
-                         alt="Healthcare" class="img-fluid rounded-4 shadow-lg" style="width: 100%; max-height: 400px; object-fit: contain;">
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">Your Health, Our Priority</h1>
+                <p class="hero-subtitle">Connect with top healthcare professionals and leading hospitals through our innovative platform.</p>
+                <div class="hero-buttons">
+                    <button class="btn hero-btn hero-btn-video" onclick="openVideoModal()">
+                        <i class="fas fa-play-circle"></i>
+                        Watch Video
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Quick Search Section -->
-<section class="py-4 bg-light">
+<!-- Updated Video Modal -->
+<div class="video-modal" id="videoModal">
+    <div class="video-container">
+        <button class="close-video" onclick="closeVideoModal()" aria-label="Close video">
+            <i class="fas fa-times"></i>
+        </button>
+        <iframe id="youtubeVideo" 
+                src="about:blank" 
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+        </iframe>
+    </div>
+</div>
+
+<!-- Search Section -->
+<section class="search-section">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-4">
-                        <form action="{% url 'search_doctors' %}" method="GET" class="row g-3">
-                            <div class="col-md-5">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0">
-                                        <i class="fas fa-user-md text-primary"></i>
-                                    </span>
-                                    <input type="text" name="specialty" class="form-control border-start-0" placeholder="Specialty (e.g., Cardiology)">
-                                </div>
-                            </div>
-                            <div class="col-md-5">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0">
-                                        <i class="fas fa-map-marker-alt text-primary"></i>
-                                    </span>
-                                    <input type="text" name="location" class="form-control border-start-0" placeholder="Location">
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search me-2"></i>Find
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+        <div class="search-container">
+            <form class="search-form" action="{% url 'search_doctors' %}" method="get">
+                <div class="search-input">
+                    <i class="fas fa-user-md"></i>
+                    <input type="text" name="specialty" placeholder="Specialty (e.g., Cardiology)" required>
                 </div>
-            </div>
+                <div class="search-input">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <input type="text" name="location" placeholder="Location" required>
+                </div>
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search me-2"></i>Find
+                </button>
+            </form>
         </div>
     </div>
 </section>
 
 <!-- Stats Section -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
-                <div class="text-center">
-                    <div class="stats-counter">50+</div>
-                    <p class="text-muted mb-0">Hospitals</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="text-center">
-                    <div class="stats-counter">200+</div>
-                    <p class="text-muted mb-0">Doctors</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="text-center">
-                    <div class="stats-counter">10K+</div>
-                    <p class="text-muted mb-0">Patients</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="text-center">
-                    <div class="stats-counter">15K+</div>
-                    <p class="text-muted mb-0">Appointments</p>
-                </div>
-            </div>
+<section class="stats-section">
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-number">50+</div>
+            <div class="stat-label">Hospitals</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">200+</div>
+            <div class="stat-label">Doctors</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">10K+</div>
+            <div class="stat-label">Patients</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">15K+</div>
+            <div class="stat-label">Appointments</div>
         </div>
     </div>
 </section>
@@ -334,4 +621,45 @@
         {% endif %}
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openVideoModal() {
+        const modal = document.getElementById('videoModal');
+        const iframe = document.getElementById('youtubeVideo');
+        // Add modest branding and related videos parameters
+        iframe.src = 'https://www.youtube.com/embed/5AV1L5tbmiE?autoplay=1&modestbranding=1&rel=0';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeVideoModal() {
+        const modal = document.getElementById('videoModal');
+        const iframe = document.getElementById('youtubeVideo');
+        iframe.src = 'about:blank';
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside the video
+    document.getElementById('videoModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeVideoModal();
+        }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('videoModal').classList.contains('active')) {
+            closeVideoModal();
+        }
+    });
+
+    // Handle video loading errors
+    document.getElementById('youtubeVideo').addEventListener('error', function() {
+        alert('Error loading video. Please try again later.');
+        closeVideoModal();
+    });
+</script>
 {% endblock %}
